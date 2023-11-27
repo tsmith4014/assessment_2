@@ -1,4 +1,4 @@
-# FILEPATH: /Users/chadthompsonsmith/DevOpsAlpha/assessment_2/modules/variables.tf
+#modules/variables.tf
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
