@@ -1,0 +1,23 @@
+#ansible-project/roles/flask_backend/vars/main.yml
+system_packages:
+  - python3-pip
+  - python3-venv
+  - git
+  - build-essential
+  - libmysqlclient-dev
+
+git_repo: "https://github.com/chandradeoarya/todolist-flask.git"
+project_path: "/home/ubuntu/todolist-flask"
+virtualenv_path: "{{ project_path }}/venv"
+gunicorn_bind: "0.0.0.0:80"
+requirements_file: "requirements.txt"
+
+# Flask application environment variables
+env_vars:
+  FLASK_APP: "todo.py"
+  FLASK_ENV: "development"
+  MYSQL_DATABASE_HOST: "{{ hostvars[groups['type_database'][0]]['inventory_hostname'] }}"
+  MYSQL_DATABASE_USER: "{{ vault_mysql_database_user }}"
+  MYSQL_DATABASE_PASSWORD: "{{ vault_mysql_database_password }}"
+  MYSQL_DATABASE_PORT: "{{ vault_mysql_database_port }}"
+  MYSQL_DATABASE_DB: "{{ vault_mysql_database_name }}"

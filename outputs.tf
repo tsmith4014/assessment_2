@@ -1,3 +1,4 @@
+#outputs.tf
 output "backend_server_ip" {
   value = module.backend_server.instance_public_ips
 }

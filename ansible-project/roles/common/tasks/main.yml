@@ -1,0 +1,19 @@
+#/ansible-project/roles/common/tasks/main.yml
+- name: Update all system packages to latest version
+  apt:
+    update_cache: yes
+    upgrade: "dist"
+    cache_valid_time: 3600
+  become: true
+
+- name: Install required system packages
+  apt:
+    name: "{{ item }}"
+    state: latest
+  loop: "{{ system_packages }}"
+  become: true
+  register: package_install
+
+- name: Output result of package installation
+  debug:
+    var: package_install.results

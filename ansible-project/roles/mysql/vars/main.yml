@@ -1,0 +1,8 @@
+# roles/mysql/vars/main.yml
+system_packages:
+  - mysql-server
+  - python3-pymysql
+
+mysql_root_password: "{{ vault_mysql_root_password }}"
+mysql_user: "{{ vault_mysql_user }}"
+mysql_user_password: "{{ vault_mysql_user_password }}"

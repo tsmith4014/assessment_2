@@ -1,0 +1,18 @@
+# site.yml
+---
+# - hosts: type_database
+#   become: true
+#   vars_files:
+#     - roles/mysql/vars/secret.yml
+#   roles:
+#     - common
+#     - mysql
+
+- hosts: type_backend
+  become: true
+  vars_files:
+    - roles/mysql/vars/secret.yml
+    # - roles/flask_backend/vars/main.yml
+  roles:
+    - common
+    - flask_backend

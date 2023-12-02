@@ -1,0 +1,72 @@
+# roles/mysql/tasks/main.yml
+- name: Install MySQL server
+  apt:
+    name: "mysql-server"
+    state: present
+  become: true
+
+- name: Start MySQL service and enable on boot
+  systemd:
+    name: mysql
+    state: started
+    enabled: yes
+  become: true
+
+- name: Check MySQL root user's authentication method
+  command: mysql -u root -p'{{ vault_mysql_root_password }}' -e "SELECT plugin FROM mysql.user WHERE User = 'root'"
+  register: root_auth_method
+  ignore_errors: true
+  become: true
+
+- name: Change MySQL root user's authentication method
+  mysql_query:
+    login_user: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    query:
+      - ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ vault_mysql_root_password }}';
+      - FLUSH PRIVILEGES;
+  become: true
+  when: "'mysql_native_password' not in root_auth_method.stdout"
+
+- name: Allow remote connections to MySQL
+  lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    line: "bind-address = 0.0.0.0"
+    regexp: "^bind-address"
+  become: true
+
+- name: Restart MySQL service
+  systemd:
+    name: mysql
+    state: restarted
+  become: true
+
+- name: Create todo_db database
+  mysql_db:
+    name: todo_db
+    state: present
+    login_user: root
+    login_password: "{{ vault_mysql_root_password }}"
+  become: true
+
+
+
+- name: Create MySQL user for Flask application
+  mysql_user:
+    login_user: root
+    login_password: "{{ vault_mysql_root_password }}"
+    name: "{{ vault_mysql_user }}"
+    password: "{{ vault_mysql_user_password }}"
+    host: "%"
+    state: present
+  become: true
+
+- name: Grant all privileges to MySQL user for Flask application
+  mysql_user:
+    login_user: root
+    login_password: "{{ vault_mysql_root_password }}"
+    name: "{{ vault_mysql_user }}"
+    host: "%"
+    priv: "*.*:ALL"
+    state: present
+  become: true

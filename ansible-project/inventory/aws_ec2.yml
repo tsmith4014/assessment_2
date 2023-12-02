@@ -1,0 +1,14 @@
+#ansbile-project/inventory/aws_ec2.yml
+plugin: aws_ec2
+regions:
+  - eu-west-2  # London
+filters:
+  tag:Environment: dev  # Filter instances with Environment tag set to dev
+keyed_groups:
+  - key: tags['Environment']
+    prefix: env
+  - key: tags['Type']
+    prefix: type
+  - key: tags['Team']
+    prefix: team
+
