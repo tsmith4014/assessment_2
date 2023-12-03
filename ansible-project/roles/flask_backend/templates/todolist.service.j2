@@ -8,8 +8,6 @@ After=syslog.target network-online.target
 [Service]
 Type=simple
 WorkingDirectory={{ project_path }}
-Environment="PATH={{ virtualenv_path }}/bin"
-ExecStart={{ virtualenv_path }}/bin/python {{ project_path }}/todo.py
 ExecStart={{ virtualenv_path }}/bin/gunicorn todo:app -c {{ project_path }}/gunicorn_config.py
 Restart=always
 RestartSec=10

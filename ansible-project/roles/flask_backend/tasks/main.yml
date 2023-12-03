@@ -1,4 +1,18 @@
 # /ansible-project/roles/flask_backend/tasks/main.yml
+- name: Get backend host IP
+  set_fact:
+    backend_host_ip: "{{ (hostvars[groups['type_backend'][0]]['inventory_hostname'] | regex_replace('ec2-', '') | regex_replace('.eu-west-2.compute.amazonaws.com', '')) | replace('-', '.') }}"
+
+- name: Debug env_vars
+  debug:
+    var: env_vars
+
+- name: Debug MYSQL_DATABASE_IP
+  debug:
+    msg: "{{ (hostvars[groups['type_database'][0]]['inventory_hostname'] | regex_replace('ec2-', '') | regex_replace('.eu-west-2.compute.amazonaws.com', '')) | replace('-', '.') }}"
+  run_once: true
+
+
 - name: Install MySQL client
   apt:
     name: mysql-client
@@ -9,12 +23,29 @@
   git:
     repo: "{{ git_repo }}"
     dest: "{{ project_path }}"
-    version: "env"  # Make sure to use the correct branch
+    version: "env"  
   become: true
 
+- name: Update API_URL in index.html
+  lineinfile:
+    path: "{{ project_path }}/index.html"
+    regexp: 'const API_URL\s*=\s*"http://localhost"; // replace with your API endpoint'
+    line: "        const API_URL = 'http://{{ backend_host_ip }}';"
+  become: true
+
+- name: Display the contents of index.html
+  command: cat "{{ project_path }}/index.html"
+  register: output
+  changed_when: false
+
+- name: Print the contents of index.html
+  debug:
+    var: output.stdout_lines
+
+
 - name: Copy gunicorn_config.py
-  ansible.builtin.copy:
-    src: "{{ project_path }}/gunicorn_config.py"
+  copy:
+    src: "{{ role_path }}/templates/gunicorn_config.py"
     dest: "{{ project_path }}/gunicorn_config.py"
     owner: ubuntu
     group: ubuntu
@@ -40,11 +71,9 @@
     virtualenv: "{{ virtualenv_path }}"
   become: true
 
-
-- name: Debug MYSQL_DATABASE_IP
+- name: Debug MYSQL_DATABASE_PORT
   debug:
-    msg: "{{ hostvars[groups['type_database'][0]]['inventory_hostname'] }}"
-  run_once: true
+    var: env_vars.MYSQL_DATABASE_PORT
 
 - name: Set environment variables
   lineinfile:
@@ -53,10 +82,6 @@
     state: present
   loop: "{{ env_vars | dict2items }}"
   become: true
-
-- name: Include secrets from vault
-  include_vars:
-    file: "/Users/chadthompsonsmith/DevOpsAlpha/assessment_2/ansible-project/roles/mysql/vars/secret.yml"
 
 - name: Print environment variables
   debug:
@@ -67,12 +92,12 @@
     src: env.j2
     dest: "{{ project_path }}/.env"
   vars:
-    MYSQL_DATABASE_HOST: "{{ hostvars[groups['type_database'][0]]['inventory_hostname'] }}"
+    MYSQL_DATABASE_HOST: "{{ (hostvars[groups['type_database'][0]]['inventory_hostname'] | regex_replace('ec2-', '') | regex_replace('.eu-west-2.compute.amazonaws.com', '')) | replace('-', '.') }}"
     MYSQL_DATABASE_USER: "{{ vault_mysql_user }}"
     MYSQL_DATABASE_PASSWORD: "{{ vault_mysql_user_password }}"
     MYSQL_DATABASE_PORT: "{{ vault_mysql_database_port }}"
+    MYSQL_DATABASE_DB: "{{ vault_mysql_database_name }}"
   become: true
-
 
 - name: Print .env file
   command: cat "{{ project_path }}/.env"
@@ -90,10 +115,11 @@
     dest: /etc/systemd/system/todolist.service
     mode: '0644'
   vars:
-    MYSQL_DATABASE_HOST: "{{ hostvars[groups['type_database'][0]]['inventory_hostname'] }}"
+    MYSQL_DATABASE_HOST: "{{ (hostvars[groups['type_database'][0]]['inventory_hostname'] | regex_replace('ec2-', '') | regex_replace('.eu-west-2.compute.amazonaws.com', '')) | replace('-', '.') }}"
     MYSQL_DATABASE_USER: "{{ vault_mysql_user }}"
     MYSQL_DATABASE_PASSWORD: "{{ vault_mysql_user_password }}"
     MYSQL_DATABASE_PORT: "{{ vault_mysql_database_port }}"
+    MYSQL_DATABASE_DB: "{{ vault_mysql_database_name }}"
   become: true
 
 - name: Reload systemd to read new todolist service
@@ -113,266 +139,3 @@
   register: todolist_status
   changed_when: false
   ignore_errors: true
-
-- name: Copy Gunicorn service file
-  template:
-    src: "gunicorn.service.j2"
-    dest: "/home/ubuntu/todolist/.service"
-  vars:
-    MYSQL_DATABASE_HOST: "{{ hostvars[groups['type_database'][0]]['inventory_hostname'] }}"
-    MYSQL_DATABASE_USER: "{{ vault_mysql_user }}"
-    MYSQL_DATABASE_PASSWORD: "{{ vault_mysql_user_password }}"
-    MYSQL_DATABASE_PORT: "{{ vault_mysql_database_port }}"
-  become: true
-  notify:
-    - restart gunicorn
-
-- name: Debug MYSQL_DATABASE_PORT
-  debug:
-    var: env_vars.MYSQL_DATABASE_PORT
-
-- name: Start and enable Gunicorn service
-  systemd:
-    name: gunicorn
-    state: started
-    enabled: yes
-    daemon_reload: yes
-  become: true
-  ignore_errors: true
-
-
-
-
-
-
-# - name: Create a virtual environment
-#   command:
-#     cmd: python3 -m venv "{{ virtualenv_path }}"
-#     creates: "{{ virtualenv_path }}"
-#   become: true
-
-# - name: Install Python dependencies
-#   pip:
-#     requirements: "{{ project_path }}/{{ requirements_file }}"
-#     virtualenv: "{{ virtualenv_path }}"
-#   become: true
-
-# - name: Install Gunicorn
-#   pip:
-#     name: gunicorn
-#     virtualenv: "{{ virtualenv_path }}"
-#   become: true
-
-
-# - name: Debug
-#   debug:
-#     msg: "{{ hostvars[groups['type_database'][0]]['inventory_hostname'] }}"
-#   run_once: true
-
-# - name: Set environment variables
-#   lineinfile:
-#     path: "{{ virtualenv_path }}/bin/activate"
-#     line: "export {{ item.key }}={{ item.value }}"
-#     state: present
-#   loop: "{{ env_vars | dict2items }}"
-#   become: true
-
-# - name: Include secrets from vault
-#   include_vars:
-#     file: "/Users/chadthompsonsmith/DevOpsAlpha/assessment_2/ansible-project/roles/mysql/vars/secret.yml"
-
-# - name: Print environment variables
-#   debug:
-#     msg: "{{ ansible_env }}"
-
-# - name: Create environment file
-#   template:
-#     src: env.j2
-#     dest: "{{ project_path }}/.env"
-#   vars:
-#     MYSQL_DATABASE_HOST: "{{ hostvars[groups['type_database'][0]]['inventory_hostname'] }}"
-#     MYSQL_DATABASE_USER: "{{ vault_mysql_user }}"
-#     MYSQL_DATABASE_PASSWORD: "{{ vault_mysql_user_password }}"
-#     MYSQL_DATABASE_PORT: "{{ vault_mysql_database_port }}"
-#   become: true
-
-
-# - name: Print .env file
-#   command: cat "{{ project_path }}/.env"
-#   register: env_file
-#   changed_when: false
-
-# - name: Show .env file
-#   debug:
-#     var: env_file.stdout_lines
-
-
-# - name: Create systemd service file for the todolist
-#   template:
-#     src: todolist.service.j2
-#     dest: /etc/systemd/system/todolist.service
-#     mode: '0644'
-#   vars:
-#     MYSQL_DATABASE_HOST: "{{ hostvars[groups['type_database'][0]]['inventory_hostname'] }}"
-#     MYSQL_DATABASE_USER: "{{ vault_mysql_user }}"
-#     MYSQL_DATABASE_PASSWORD: "{{ vault_mysql_user_password }}"
-#     MYSQL_DATABASE_PORT: "{{ vault_mysql_database_port }}"
-#   become: true
-
-# - name: Reload systemd to read new todolist service
-#   systemd:
-#     daemon_reload: yes
-#   become: true
-
-# - name: Enable and start todolist service
-#   systemd:
-#     name: todolist
-#     enabled: yes
-#     state: started
-#   become: true
-
-# - name: Check todolist service status
-#   command: systemctl status todolist
-#   register: todolist_status
-#   changed_when: false
-#   ignore_errors: true
-
-# - name: Print todolist service status
-#   debug:
-#     var: todolist_status.stdout_lines
-
-# - name: Copy Gunicorn service file
-#   template:
-#     src: "gunicorn.service.j2"
-#     dest: "/home/ubuntu/todolist/.service"
-#   vars:
-#     MYSQL_DATABASE_HOST: "{{ hostvars[groups['type_database'][0]]['inventory_hostname'] }}"
-#     MYSQL_DATABASE_USER: "{{ vault_mysql_user }}"
-#     MYSQL_DATABASE_PASSWORD: "{{ vault_mysql_user_password }}"
-#     MYSQL_DATABASE_PORT: "{{ vault_mysql_database_port }}"
-#   become: true
-#   notify:
-#     - restart gunicorn
-
-# - name: Debug MYSQL_DATABASE_PORT
-#   debug:
-#     var: env_vars.MYSQL_DATABASE_PORT
-
-# - name: Start and enable Gunicorn service
-#   systemd:
-#     name: gunicorn
-#     state: started
-#     enabled: yes
-#     daemon_reload: yes
-#   become: true
-#   ignore_errors: true
-
-
-
-
-
-# - name: Get Gunicorn service status
-#   command: systemctl status gunicorn.service
-#   register: gunicorn_status
-#   ignore_errors: true
-
-# - name: Print Gunicorn service status
-#   debug:
-#     var: gunicorn_status.stdout_lines
-
-# - name: Get system logs
-#   command: journalctl -xe
-#   register: system_logs
-#   ignore_errors: true
-
-# - name: Print system logs
-#   debug:
-#     var: system_logs.stdout_lines
-
-# - name: Check Gunicorn service status
-#   command: systemctl status gunicorn
-#   register: gunicorn_status
-#   changed_when: false
-#   ignore_errors: true
-
-  
-
-# - name: Print Gunicorn service status
-#   debug:
-#     var: gunicorn_status.stdout_lines
-
-
-
-
-
-
-
-# # roles/flask_backend/tasks/main.yml
-# - name: Install MySQL client
-#   apt:
-#     name: mysql-client
-#     state: present
-#   become: true
-
-# # - name: Clone the Flask application repository
-# #   git:
-# #     repo: "{{ git_repo }}"
-# #     dest: "{{ project_path }}"
-# #     version: "env"  # Make sure to use the correct branch
-# #   become: true
-
-# - name: Create a virtual environment
-#   command:
-#     cmd: python3 -m venv "{{ virtualenv_path }}"
-#     creates: "{{ virtualenv_path }}"
-#   become: true
-
-# - name: Install Python dependencies
-#   pip:
-#     requirements: "{{ project_path }}/{{ requirements_file }}"
-#     virtualenv: "{{ virtualenv_path }}"
-#   become: true
-
-# - name: Install Gunicorn
-#   pip:
-#     name: gunicorn
-#     virtualenv: "{{ virtualenv_path }}"
-#   become: true
-
-# - name: Set environment variables
-#   lineinfile:
-#     path: "{{ virtualenv_path }}/bin/activate"
-#     line: "export {{ item.key }}={{ item.value }}"
-#     state: present
-#   loop: "{{ env_vars | dict2items }}"
-#   become: true
-
-# - name: Copy Gunicorn service file
-#   template:
-#     src: "gunicorn.service.j2"
-#     dest: "/etc/systemd/system/gunicorn.service"
-#   become: true
-#   notify:
-#     - restart gunicorn
-
-# - name: Debug MYSQL_DATABASE_PORT
-#   debug:
-#     var: env_vars.MYSQL_DATABASE_PORT
-
-# - name: Start and enable Gunicorn service
-#   systemd:
-#     name: gunicorn
-#     state: started
-#     enabled: yes
-#     daemon_reload: yes
-#   become: true
-
-# - name: Check Gunicorn service status
-#   command: systemctl status gunicorn
-#   register: gunicorn_status
-#   changed_when: false
-#   ignore_errors: true
-
-# - name: Print Gunicorn service status
-#   debug:
-#     var: gunicorn_status.stdout_lines
