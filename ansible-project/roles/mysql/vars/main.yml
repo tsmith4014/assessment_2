@@ -1,4 +1,4 @@
-# roles/mysql/vars/main.yml
+#/ansible-project/roles/mysql/vars/main.yml
 system_packages:
   - mysql-server
   - python3-pymysql

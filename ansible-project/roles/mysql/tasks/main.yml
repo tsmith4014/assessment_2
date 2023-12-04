@@ -1,4 +1,4 @@
-# roles/mysql/tasks/main.yml
+# /ansible-project/roles/mysql/tasks/main.yml
 - name: Install MySQL server
   apt:
     name: "mysql-server"

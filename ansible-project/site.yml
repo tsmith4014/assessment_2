@@ -1,4 +1,4 @@
-# Ansible-project/site.yml
+# /ansible-project/site.yml
 ---
 - hosts: type_database
   become: true
