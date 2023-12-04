@@ -1,3 +1,14 @@
+#iam.tf
+
+/**
+ * This Terraform code defines IAM resources for granting EC2 instances access to an S3 bucket.
+ * 
+ * Resources:
+ * - aws_iam_role.ec2_s3_role: IAM role that allows EC2 instances to assume the role.
+ * - aws_iam_policy.s3_access: IAM policy that grants access to specific S3 bucket actions.
+ * - aws_iam_role_policy_attachment.s3_access_attachment: Attaches the IAM policy to the IAM role.
+ * - aws_iam_instance_profile.ec2_s3_profile: IAM instance profile that associates the IAM role with EC2 instances.
+ */
 resource "aws_iam_role" "ec2_s3_role" {
   name = "ec2_s3_access_role"
 

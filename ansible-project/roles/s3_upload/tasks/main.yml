@@ -7,14 +7,6 @@
     state: present
   become: true
 
-# - name: Upload index.html to S3
-#   aws_s3:
-#     bucket: "vegas-todo-bucket"
-#     object: "index.html"
-#     src: "{{ project_path }}/index.html"
-#     mode: put
-#   become: true
-
 
 - name: Upload index.html to S3
   amazon.aws.aws_s3:

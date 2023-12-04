@@ -1,11 +1,16 @@
-# root main.tf
+Thank you for pointing out the formatting issue. Here's the corrected Markdown documentation for your Terraform configuration:
+
+## Root Configuration (`main.tf`)
+
+Security group and module definitions for backend and database servers.
+
+```hcl
 # Security Group for Backend Server
 resource "aws_security_group" "backend_sg" {
   name        = "backend-sg"
   description = "Security group for backend server"
   vpc_id      = var.vpc_id
 
-  # SSH Access
   ingress {
     from_port   = 22
     to_port     = 22
@@ -13,7 +18,6 @@ resource "aws_security_group" "backend_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # HTTP Access
   ingress {
     from_port   = 80
     to_port     = 80
@@ -35,7 +39,6 @@ resource "aws_security_group" "database_sg" {
   description = "Security group for database server"
   vpc_id      = var.vpc_id
 
-  # SSH Access
   ingress {
     from_port   = 22
     to_port     = 22
@@ -43,12 +46,11 @@ resource "aws_security_group" "database_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # MySQL Access from the Backend Server's IP
   ingress {
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
-    cidr_blocks = ["${module.backend_server.instance_public_ips[0]}/32"] # Convert IP to CIDR block
+    cidr_blocks = ["${module.backend_server.instance_public_ips[0]}/32"]
   }
 
   egress {
@@ -59,7 +61,6 @@ resource "aws_security_group" "database_sg" {
   }
 }
 
-# Define backend and database modules
 module "backend_server" {
   vpc_id                  = var.vpc_id
   source                  = "./modules/ubuntu_servers"
@@ -91,17 +92,13 @@ module "database_server" {
   }
 }
 
-
-# S3 bucket resource
 resource "aws_s3_bucket" "frontend_bucket" {
   bucket = "vegas-todo-bucket"
-
   tags = {
     Name        = "Frontend"
     Team        = "mobile-app"
     Environment = "dev"
   }
-
   cors_rule {
     allowed_origins = ["https://vegas-todo-bucket.s3.eu-west-2.amazonaws.com/index.html"]
     allowed_methods = ["GET", "PUT", "POST", "DELETE"]
@@ -111,54 +108,45 @@ resource "aws_s3_bucket" "frontend_bucket" {
   }
 }
 
-# Data source for the S3 bucket
 data "aws_s3_bucket" "frontend_bucket_data" {
   bucket = aws_s3_bucket.frontend_bucket.bucket
 }
 
-# S3 Bucket Ownership Controls
 resource "aws_s3_bucket_ownership_controls" "frontend_bucket_ownership" {
   bucket = aws_s3_bucket.frontend_bucket.bucket
-
   rule {
     object_ownership = "BucketOwnerPreferred"
   }
 }
 
-# S3 Bucket Public Access Block
 resource "aws_s3_bucket_public_access_block" "frontend_bucket_access_block" {
   bucket = aws_s3_bucket.frontend_bucket.id
-
   block_public_acls       = false
   block_public_policy     = false
   ignore_public_acls      = false
   restrict_public_buckets = false
 }
 
-# S3 Bucket ACL
 resource "aws_s3_bucket_acl" "frontend_bucket_acl" {
   depends_on = [
     aws_s3_bucket_ownership_controls.frontend_bucket_ownership,
     aws_s3_bucket_public_access_block.frontend_bucket_access_block,
   ]
-
   bucket = aws_s3_bucket.frontend_bucket.id
   acl    = "public-read"
 }
 
-# S3 Bucket Website Configuration
 resource "aws_s3_bucket_website_configuration" "frontend_bucket_website_config" {
   bucket = aws_s3_bucket.frontend_bucket.bucket
-
   index_document {
     suffix = "index.html"
   }
 }
 
-# S3 Bucket Policy
 resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
-  bucket = aws_s3_bucket.frontend_bucket.id
 
+
+  bucket = aws_s3_bucket.frontend_bucket.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -179,3 +167,60 @@ resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
     ]
   })
 }
+```
+
+## IAM Configuration (`iam.tf`)
+
+Defines IAM resources for EC2 instances' access to S3 bucket.
+
+```hcl
+resource "aws_iam_role" "ec2_s3_role" {
+  name = "ec2_s3_access_role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        },
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "s3_access" {
+  name        = "S3AccessPolicy"
+  description = "Policy that allows EC2 to access specific S3 Bucket"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          aws_s3_bucket.frontend_bucket.arn,
+          "${aws_s3_bucket.frontend_bucket.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "s3_access_attachment" {
+  role       = aws_iam_role.ec2_s3_role.name
+  policy_arn = aws_iam_policy.s3_access.arn
+}
+
+resource "aws_iam_instance_profile" "ec2_s3_profile" {
+  name = "ec2_s3_profile"
+  role = aws_iam_role.ec2_s3_role.name
+}
+```
