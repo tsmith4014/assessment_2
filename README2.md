@@ -1,8 +1,12 @@
 # Terraform Configuration for Ubuntu Servers in AWS
 
+---
+
 ## Ubuntu Servers Module (`main.tf`)
 
 This Terraform module creates Ubuntu servers in AWS. It retrieves the latest Ubuntu AMI and provisions instances in a specified subnet, associating them with a given security group, key pair, and IAM instance profile. Each instance is uniquely tagged.
+
+---
 
 ```hcl
 
@@ -30,6 +34,8 @@ resource "aws_instance" "ubuntu_server" {
   )
 }
 ```
+
+---
 
 ## Variables for Ubuntu Servers (`variables.tf`)
 
@@ -90,6 +96,8 @@ variable "associate_public_ip" {
 }
 ```
 
+---
+
 ## Outputs for Ubuntu Servers (`outputs.tf`)
 
 Outputs the public IPs of the instances.
@@ -99,6 +107,8 @@ output "instance_public_ips" {
   value = aws_instance.ubuntu_server[*].public_ip
 }
 ```
+
+---
 
 ## Root Configuration (`main.tf`)
 
@@ -281,6 +291,8 @@ resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
 }
 ```
 
+---
+
 ## IAM Configuration (`iam.tf`)
 
 Defines IAM resources for EC2 instances' access to S3 bucket.
@@ -337,6 +349,8 @@ resource "aws_iam_instance_profile" "ec2_s3_profile" {
 }
 ```
 
+---
+
 ## Terraform Providers (`providers.tf`)
 
 Configuration for required Terraform providers.
@@ -356,6 +370,8 @@ provider "aws" {
 }
 ```
 
+---
+
 ## Terraform Variable Values (`terraform.tfvars`)
 
 Variable values for the Terraform configuration.
@@ -366,6 +382,8 @@ subnet_id = "subnet-0394725cdbfd85d65"
 key_name  = "cpdevopsew-eu-west-2"
 aws_region = "eu-west-2"
 ```
+
+---
 
 ## Variable Definitions (`variables.tf`)
 
@@ -392,3 +410,25 @@ variable "key_name" {
   type        = string
 }
 ```
+
+---
+
+## Outputs Configuration (`outputs.tf`)
+
+Defines the outputs for the Terraform configuration.
+
+```hcl
+output "backend_server_ip" {
+  value = module.backend_server.instance_public_ips
+}
+
+output "database_server_ip" {
+  value = module.database_server.instance_public_ips
+}
+
+output "frontend_bucket_name" {
+  value = aws_s3_bucket.frontend_bucket.bucket
+}
+```
+
+This section of the Terraform configuration (`outputs.tf`) specifies the outputs for your infrastructure, including the IP addresses of backend and database servers, and the name of the frontend S3 bucket.
