@@ -1,10 +1,42 @@
 # Terraform and Ansible Deployment Documentation
 
+## Index
+
+1. [Overview](#overview)
+2. [Introduction](#introduction)
+3. [Terraform Configuration for Ubuntu Servers in AWS](#terraform-configuration-for-ubuntu-servers-in-aws)
+   - [Terraform Files](#terraform-files)
+   - [Ubuntu Servers Module (main.tf)](#ubuntu-servers-module-maintf)
+   - [Variables for Ubuntu Servers (variables.tf)](#variables-for-ubuntu-servers-variablestf)
+   - [Outputs for Ubuntu Servers (outputs.tf)](#outputs-for-ubuntu-servers-outputstf)
+   - [Root Configuration (main.tf)](#root-configuration-maintf)
+   - [IAM Configuration (iam.tf)](#iam-configuration-iamtf)
+   - [Terraform Providers (providers.tf)](#terraform-providers-providerstf)
+   - [Terraform Variable Values (terraform.tfvars)](#terraform-variable-values-terraformtfvars)
+   - [Variable Definitions (variables.tf)](#variable-definitions-variablestf)
+   - [Outputs Configuration (outputs.tf)](#outputs-configuration-outputstf)
+4. [Ansible Configuration for Flask Application Deployment](#ansible-configuration-for-flask-application-deployment)
+   - [Ansible Playbooks](#ansible-playbooks)
+   - [Ansible Configuration File (/ansible-project/ansible.cfg)](#ansible-configuration-file-ansible-projectansiblecfg)
+   - [Ansible Tasks for Flask Application Deployment](#ansible-tasks-for-flask-application-deployment)
+   - [MySQL Role Configuration](#mysql-role-configuration)
+   - [Flask Backend Role Configuration](#flask-backend-role-configuration)
+   - [Common Role Configuration](#common-role-configuration)
+   - [Inventory Configuration](#/ansible-project/inventory/aws-ec2.yml)
+5. [Deployment Commands](#deployment-commands)
+6. [Conclusion](#conclusion)
+
 ## Overview
 
 This document outlines the steps, configurations, and scripts used to deploy a Flask application with a MySQL database on AWS EC2 instances using Terraform and Ansible.
 
-## Terraform Configuration for Ubuntu Servers in AWS
+---
+
+## Introduction
+
+This comprehensive guide details the deployment and management of a Todo-List Flask application using Terraform and Ansible on AWS. It serves as a meticulous blueprint for setting up Ubuntu servers with Terraform and configuring a Flask backend along with a MySQL database using Ansible. This document is essential for developers who aim to replicate or understand the infrastructure and setup involved in this project.
+
+### Terraform Configuration for Ubuntu Servers in AWS
 
 Terraform is used to provision AWS infrastructure resources, EC2 backend(flask app API) and database(MySQL application-todo database) instances, sec-grps, IAM roles/polices, and the S3 bucket(Front end serves our HTML).
 
@@ -451,9 +483,15 @@ output "frontend_bucket_name" {
 
 ---
 
+---
+
 ## Ansible Configuration for Flask Application Deployment
 
-Ansible automates the deployment and configuration of the Flask application and MySQL database on AWS.
+Ansible automates the deployment and configuration of the Flask application, S-3 Bucket, and MySQL database on AWS.
+
+---
+
+---
 
 ### Ansible Playbooks
 
@@ -491,7 +529,7 @@ host_key_checking = False
 
 ---
 
-## Ansible Tasks for Flask Application Deployment
+### Ansible Tasks for Flask Application Deployment
 
 ---
 
@@ -832,9 +870,7 @@ These variables include the system packages needed for MySQL setup, the root pas
     var: package_install.results
 ```
 
----
-
-### Inventory Configuration (`/ansible-project/inventory/aws_ec2.yml`)
+### Inventory Configuration (/ansible-project/inventory/aws-ec2.yml)
 
 ```yaml
 plugin: aws_ec2
@@ -853,8 +889,58 @@ keyed_groups:
 
 ---
 
+### Deployment Commands
+
+#### Terraform Build Commands
+
+1. **`terraform plan`**: Generates an execution plan for Terraform, allowing you to preview the changes that will be made to your infrastructure before applying them.
+
+2. **`terraform apply`**: Executes the actions proposed in the Terraform plan. It provisions or updates resources as defined in the Terraform configuration files.
+
+3. **`terraform destroy`**: This command is used to remove all resources that have been created by Terraform. It is an essential command for cleaning up your environment and ensuring that no unwanted resources are left running, which might incur costs.
+
+#### Ansible Build Command
+
+- **`ansible-playbook -i inventory/aws_ec2.yml site.yml -vv --vault-password-file /path/to/pw.txt`**: Runs the Ansible playbook, specifying the inventory file, playbook file, verbosity level, and the location of the vault password file. It configures and deploys the application as defined in the Ansible roles and tasks.
+
+#### Automated Deployment using `deploy.sh`
+
+- **Script Path**: `/path/to/deploy.sh`
+
+**Script Content**:
+
+```bash
+#!/bin/bash
+# Navigate to Terraform directory and run Terraform
+cd /path/to/terraform_directory
+terraform init
+terraform apply -auto-approve
+
+# Navigate to Ansible directory and run Ansible
+cd /path/to/ansible_directory
+ansible-playbook -i inventory/aws_ec2.yml site.yml --vault-password-file /path/to/pw.txt
+```
+
+The `deploy.sh` script automates the deployment process using both Terraform and Ansible. It initializes Terraform, applies the Terraform configurations automatically, and then navigates to the Ansible directory to run the Ansible playbook for configuring and deploying the application.
+
+#### Cleanup with Terraform
+
+After the deployment and testing phases, you can clean up the resources to prevent any unnecessary AWS costs. Use the `terraform destroy` command in your Terraform directory to remove all the resources created by Terraform:
+
+```bash
+terraform destroy
+```
+
+This command ensures that all resources managed by Terraform in AWS are properly and safely deleted.
+
+---
+
 ### Conclusion
 
-This README provides a comprehensive guide for deploying and managing the Todo-List Flask application using Terraform and Ansible on AWS
+This README serves as a comprehensive guide for deploying and managing the Todo-List Flask application on AWS using Terraform and Ansible. The detailed documentation outlines the steps and configurations necessary for setting up a robust and scalable cloud infrastructure. Terraform scripts are used to efficiently provision AWS resources, including EC2 instances, security groups, IAM roles, and S3 buckets. Ansible playbooks and roles are then employed to configure these instances, deploying the Flask application and MySQL database. This guide not only facilitates a smooth deployment process but also ensures maintainability and scalability of the infrastructure. It's an essential resource for any developer or team looking to understand or replicate this deployment process in their own AWS environment.
+
+---
+
+---
 
 ---
