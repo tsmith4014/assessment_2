@@ -1,4 +1,10 @@
-# root main.tf
+# This Terraform configuration file defines the infrastructure resources for a DevOps project.
+# It creates the following resources:
+# - Security groups for the backend server and database server
+# - EC2 instances for the backend server and database server using a custom module
+# - An S3 bucket for the frontend application
+# - CORS configuration, ownership controls, public access block, ACL, website configuration, and policy for the S3 bucket
+
 # Security Group for Backend Server
 resource "aws_security_group" "backend_sg" {
   name        = "backend-sg"
@@ -91,29 +97,26 @@ module "database_server" {
   }
 }
 
-
 # S3 bucket resource
 resource "aws_s3_bucket" "frontend_bucket" {
   bucket = "vegas-todo-bucket"
 
   tags = {
-    Name        = "Frontend"
-    Team        = "mobile-app"
-    Environment = "dev"
-  }
-
-  cors_rule {
-    allowed_origins = ["https://vegas-todo-bucket.s3.eu-west-2.amazonaws.com/index.html"]
-    allowed_methods = ["GET", "PUT", "POST", "DELETE"]
-    allowed_headers = ["*"]
-    expose_headers  = ["ETag"]
-    max_age_seconds = 3000
+    Name        = "frontend"
   }
 }
 
-# Data source for the S3 bucket
-data "aws_s3_bucket" "frontend_bucket_data" {
+# S3 bucket CORS configuration
+resource "aws_s3_bucket_cors_configuration" "frontend_bucket_cors" {
   bucket = aws_s3_bucket.frontend_bucket.bucket
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "PUT", "POST", "DELETE"]
+    allowed_origins = ["https://vegas-todo-bucket.s3.eu-west-2.amazonaws.com/index.html"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3000
+  }
 }
 
 # S3 Bucket Ownership Controls
