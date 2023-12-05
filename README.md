@@ -36,6 +36,8 @@ This document outlines the steps, configurations, and scripts used to deploy a F
 
 This comprehensive guide details the deployment and management of a Todo-List Flask application using Terraform and Ansible on AWS. It serves as a meticulous blueprint for setting up Ubuntu servers with Terraform and configuring a Flask backend along with a MySQL database using Ansible. This document is essential for developers who aim to replicate or understand the infrastructure and setup involved in this project.
 
+[Animated Project Diagram deployment](https://tsmith4014.github.io/assessment_2/)
+
 ### Terraform Configuration for Ubuntu Servers in AWS
 
 Terraform is used to provision AWS infrastructure resources, EC2 backend(flask app API) and database(MySQL application-todo database) instances, sec-grps, IAM roles/polices, and the S3 bucket(Front end serves our HTML).
