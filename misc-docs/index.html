@@ -22,18 +22,41 @@
       .svg-container {
         position: absolute;
         top: 50%;
-        left: 50%;
+        left: 40%;
         transform: translate(-50%, -50%);
+        width: 80%; /* Adjust as needed */
+        height: 80%; /* Adjust as needed */
+      }
+
+      .svg-container object {
+        width: 100%;
+        height: 100%;
       }
     </style>
   </head>
   <body>
     <div class="bg" style="background-image: url('space.jpeg')">
       <div class="svg-container">
-        <object type="image/svg+xml" data="diag.svg" width="1000" height="1000">
+        <object type="image/svg+xml" data="diag.svg">
           Your browser does not support SVG
         </object>
       </div>
     </div>
+
+    <audio id="background-music" loop>
+      <source src="Monplaisir - Stay Quiet.mp3" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+
+    <script>
+      // Play audio on user interaction
+      document.body.addEventListener("click", function () {
+        var audio = document.getElementById("background-music");
+        // Check if the audio is not already playing
+        if (audio && audio.paused) {
+          audio.play();
+        }
+      });
+    </script>
   </body>
 </html>

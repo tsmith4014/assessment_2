@@ -12,7 +12,7 @@ sleep 60
 
 # Wait for IAM changes to propagate
 echo "Waiting for IAM changes to propagate..."
-sleep 60
+sleep 120
 
 # Navigate to Ansible directory and run Ansible
 cd /Users/chadthompsonsmith/DevOpsAlpha/assessment_2/ansible-project
