@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SVG Overlay on Image Background</title>
+    <style>
+      body,
+      html {
+        height: 100%;
+        margin: 0;
+      }
+
+      .bg {
+        /* Full height */
+        height: 100%;
+
+        /* Center and scale the image nicely */
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+
+      .svg-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg" style="background-image: url('space.jpeg')">
+      <div class="svg-container">
+        <object type="image/svg+xml" data="diag.svg" width="1000" height="1000">
+          Your browser does not support SVG
+        </object>
+      </div>
+    </div>
+  </body>
+</html>
