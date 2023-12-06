@@ -11,7 +11,7 @@
     state: started
     enabled: yes
   become: true
-
+#more ansible roles input here
 - name: Check MySQL root user's authentication method
   command: mysql -u root -p'{{ vault_mysql_root_password }}' -e "SELECT plugin FROM mysql.user WHERE User = 'root'"
   register: root_auth_method
