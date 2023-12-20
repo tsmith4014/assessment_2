@@ -290,7 +290,7 @@ simulate_load(base_url, stress_endpoints, num_threads=20, duration=10*60)
 #         thread.join()
 
 # # Base URL of your Flask application
-# base_url = 'http://3.8.238.76'  # Replace with your actual base URL
+# base_url = 'http://35.178.184.247'  # Replace with your actual base URL
 
 # # -------------------------
 # # Stress Test Section (Crashing the Server)
